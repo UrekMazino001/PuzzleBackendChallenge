@@ -18,7 +18,7 @@ namespace ReservationProject.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Client>>> GetAll()
+        public async Task<ActionResult<IEnumerable<ClientDTO>>> GetAll()
         {
             return Ok( await clientService.GetClients() );
         }
@@ -31,7 +31,7 @@ namespace ReservationProject.Controllers
             if(Client is null)
                 return NotFound();
 
-            return Client;
+            return Ok(Client);
 
         }
 
@@ -43,7 +43,7 @@ namespace ReservationProject.Controllers
             if (client is null)
                 return BadRequest();
 
-            return client;
+            return Ok(client);
         }
 
         [HttpPut]
@@ -54,7 +54,7 @@ namespace ReservationProject.Controllers
             if (client is null)
                 return BadRequest();
 
-            return client;
+            return Ok(client);
         }
 
         [HttpDelete("{id:int}")]

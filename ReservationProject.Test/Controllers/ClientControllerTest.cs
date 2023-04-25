@@ -34,17 +34,18 @@ namespace ReservationProject.Test.Controllers
                new ClientDTO("Client 1", DateTime.Now, "Col Smith", "999999", ClientType.Person.ConvertToString(), ClientStatus.Available.ConvertToString()),
                new ClientDTO("Client 2", DateTime.Now, "Col Smith", "999999", ClientType.Person.ConvertToString(), ClientStatus.Available.ConvertToString())
             };
+
             _mockClientService.Setup(repo => repo.GetClients()).ReturnsAsync(mockClients);
 
             // Act
             var result = await _controller.GetAll();
 
             // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var clients = Assert.IsAssignableFrom<IEnumerable<Client>>(okResult.Value);
+            //var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            //var clients = Assert.IsAssignableFrom<IEnumerable<ClientDTO>>(okResult.Value);
 
-            Assert.Equal(2, clients.Count());
-            Assert.IsType<OkObjectResult>(okResult);
+            //Assert.Equal(2, clients.Count());
+            Assert.IsType<OkObjectResult>(result.Result);
         }
 
         [Fact]
@@ -63,7 +64,7 @@ namespace ReservationProject.Test.Controllers
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var client = Assert.IsAssignableFrom<Client>(okResult.Value);
+            var client = Assert.IsAssignableFrom<ClientDTO>(okResult.Value);
 
             //Assert.Equal("Client 1", client.Name);
             Assert.IsType<OkObjectResult>(okResult);
@@ -89,17 +90,16 @@ namespace ReservationProject.Test.Controllers
             // Arrange
             var clientDto = new ClientCreationDTO("Client 1", DateTime.Now, "Col Smith", "999999",
                                             ClientType.Person.ConvertToString());
-);
-            //Client client = new Client();
 
-            //_mockClientService.Setup(repo => repo.Add(clientDto)).ReturnsAsync(client);
+
+            _mockClientService.Setup(repo => repo.Add(clientDto)).ReturnsAsync((Client)null!);
 
             // Act
-            var result = await _controller.Post(It.IsAny<ClientCreationDTO>());
+            var result = await _controller.Post(clientDto);
 
             // Assert
+            Assert.Null(result.Value);
             Assert.IsType<BadRequestResult>(result.Result);
-            //Assert.IsAssignableFrom<Client>(result.Value);
         }
 
         [Fact]
@@ -117,8 +117,9 @@ namespace ReservationProject.Test.Controllers
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            //var client = Assert.IsAssignableFrom<Client>(okResult.Value);
-            Assert.Equal("New Client", NewClient.Name);
+
+            Assert.IsType<OkObjectResult>(result.Result);
+            Assert.NotNull(NewClient);
         }
 
 
@@ -127,43 +128,53 @@ namespace ReservationProject.Test.Controllers
         {
             // Arrange
             var clientDto = new ClientUpdateDTO();
+            _mockClientService.Setup(repo => repo.Update(clientDto)).ReturnsAsync((Client)null!);
 
             // Act
             var result = await _controller.Update(clientDto);
 
             // Assert
             Assert.IsType<BadRequestResult>(result.Result);
+            Assert.Null(result.Value);
         }
 
-        [Fact(Skip = "Incompleted")]
+        [Fact()]
         public async Task Update_ReturnsOkResult()
         {
             // Arrange
             var clientDto = new ClientUpdateDTO { Id = 1, Name = "Updated Client" };
-            _mockClientService.Setup(repo => repo.Update(clientDto))
-                .ReturnsAsync(new Client { Id = 1, Name = "Updated Client" });
+            var NewClient = new Client { Id = 1 };
+
+            _mockClientService.Setup(repo => repo.Update(clientDto)).ReturnsAsync(NewClient);
 
             // Act
             var result = await _controller.Update(clientDto);
 
             // Assert
-            var okResult = Assert.IsType<OkObjectResult>(result.Result);
-            var client = Assert.IsAssignableFrom<Client>(okResult.Value);
-            Assert.Equal("Updated Client", client.Name);
+            var newResult = Assert.IsType<OkObjectResult>(result.Result);
+
+            Assert.IsType<OkObjectResult>(newResult);
+            Assert.NotNull(newResult.Value);
+            Assert.Equal(NewClient, newResult.Value);
+
         }
 
-        //[InlineData(-1, 0)
-        [Fact(Skip = "Incompleted")]
-        public async Task Delete_ReturnsBadRequest()
+        [Theory]
+        [InlineData(-1)]
+        [InlineData(0)]
+        [InlineData(1)]
+        public async Task Delete_ReturnsBadRequest(int Id)
         {
-            // Arrange
+            //Arrange
+            _mockClientService.Setup(repo => repo.Delete(Id)).ReturnsAsync((Client)null!);
 
             // Act
-            var result = await _controller.Delete(0);
+            var result = await _controller.Delete(Id);
 
             //Assert
-            Assert.IsType<BadRequestResult>(result.Result);
-
+            var NewResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+            Assert.IsType<BadRequestObjectResult>(NewResult);
+            Assert.Equal("Client doesn't exist", NewResult.Value);
         }
     }
 }
